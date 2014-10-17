@@ -1,0 +1,35 @@
+//This macro count and measure the area of prokaryotes (or any other cell particles present in the picture) using the particle analyzer and splitting image channel according the fluorescence recorded. In this case the macro is set to work with the green fluorescence of Acridine Orange used to count prokaryotes in sediments. Dimension, circularity and threshold level are sample/tissue/cells specific and should be evaluated accordingly in a preliminary phase before to set up the macro parameters. At the end of the measurement save the summary windows containing the results.
+//Version v0.1-10112011
+//Giovannelli & d’Errico 2011
+//This work is licensed under a Creative Commons Attribution 4.0 International License http://creativecommons.org/licenses/by/4.0/
+
+macro "Batch Prokaryote Count" {
+dir1 = getDirectory("Choose Source Directory");
+list = getFileList(dir1);
+for (i=0; i<list.length; i++) {
+	open(dir1+list[i]);
+	imgname = list[i];
+	number=i+1;
+	status=number/list.length*100;
+selectImage(imgname);
+run("Split Channels");
+
+//Select channel occording to fluorochrome used:
+	selectWindow(""+imgname+" (red)");
+	close();
+	selectWindow(""+imgname+" (blue)");
+	close();
+	selectWindow(""+imgname+" (green)");
+	run("Invert");
+	setAutoThreshold();
+
+//Specify at which level you like to threshold the image (img specific):
+	setThreshold(0, 120);
+	run("Convert to Mask");
+	run("Watershed");
+	run("Set Scale...", "distance=0 known=0 pixel=1 unit=pixel");
+
+//Specify the dimension and circularity of the desired particles/cells to be counted:
+	run("Analyze Particles...", "size=40-600 circularity=0.50-1.00 show=Nothing summarize");
+	close();
+}
